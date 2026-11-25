@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="BALSASUD">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a2540"/>
+      <stop offset="0.6" stop-color="#0f3355"/>
+      <stop offset="1" stop-color="#08243d"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f39a30"/>
+      <stop offset="1" stop-color="#c96b10"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g opacity="0.18" stroke="#8fb6d1" stroke-width="2">
+    <path d="M0 128h512M0 256h512M0 384h512M128 0v512M256 0v512M384 0v512"/>
+  </g>
+  <rect x="96" y="96" width="320" height="320" rx="64" fill="url(#mark)"/>
+  <rect x="96" y="96" width="320" height="320" rx="64" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="4"/>
+  <path d="M204 170h78c34 0 56 20 56 50 0 22-12 38-32 45v2c25 6 40 24 40 49 0 34-26 56-66 56h-76V170zm62 82c18 0 28-9 28-24s-10-23-28-23h-24v47h24zm6 86c21 0 32-9 32-26 0-16-11-25-33-25h-29v51h30z" fill="#ffffff"/>
+  <text x="256" y="462" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" letter-spacing="8" fill="#9db9cf">BALSASUD</text>
+</svg>
