@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#102a43" />
+    <title>Control de Pallets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen">
+      <div class="login-card">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <p class="eyebrow accent">OPERACIONES · PLANTA</p>
+        <h1>Control de pallets</h1>
+        <p class="login-description">Ingresa con la cuenta del área que utilizará la aplicación.</p>
+        <form id="loginForm">
+          <label>Usuario<input id="loginUser" type="text" autocomplete="username" required /></label>
+          <label>Contraseña<span class="password-field"><input id="loginPassword" type="password" autocomplete="current-password" required /><button id="togglePassword" class="password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></span></label>
+          <button class="primary-button" type="submit"><span>Ingresar</span><span class="button-arrow">→</span></button>
+          <p class="login-feedback" id="loginFeedback" role="alert"></p>
+        </form>
+      </div>
+    </section>
+    <div class="app-shell" hidden>
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">P</div>
+          <div>
+            <p class="eyebrow">OPERACIONES · PLANTA</p>
+            <h1>Control de pallets</h1>
+          </div>
+        </div>
+        <div class="topbar-tools"><div class="live-status"><span class="status-dot"></span> <span id="sessionLabel">Registro activo</span></div><button class="logout-button" id="logoutButton" type="button">Cerrar sesión</button><div class="role-switch" role="tablist" aria-label="Área de trabajo"><button class="role-tab active" data-view="paneles" role="tab" aria-selected="true">Paneles</button><button class="role-tab" data-view="terminado" role="tab" aria-selected="false">Producto terminado</button><button class="role-tab" data-view="embarques" role="tab" aria-selected="false">Embarques</button><button class="role-tab" data-view="admin" role="tab" aria-selected="false">Administrador</button></div></div>
+      </header>
+
+      <main>
+        <section class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow accent">TRAZABILIDAD EN PISO</p>
+            <h2>Del panel al producto terminado, sin perder la cuenta.</h2>
+            <p class="hero-description">Registra cada salida de pallet desde el área de paneles y consulta el avance del turno en tiempo real.</p>
+            <div class="flow-line" aria-label="Flujo de pallets">
+              <span class="flow-node active"><b>01</b> Paneles</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-node"><b>02</b> Producto terminado</span>
+            </div>
+          </div>
+          <div class="total-card">
+            <div class="total-card-top"><span>PALLETS REGISTRADOS</span><span class="date-label" id="todayLabel"></span></div>
+            <strong id="totalCount">0</strong>
+            <div class="total-footer"><span class="mini-bar"><i id="progressBar"></i></span><span id="todayCount">0 hoy</span></div>
+          </div>
+        </section>
+
+        <section class="admin-view" id="adminView" hidden>
+          <div class="admin-heading"><div><p class="eyebrow accent">CENTRO DE CONTROL</p><h2>Supervisión de operaciones</h2><p>Consulta el recorrido completo de cada pallet desde Paneles, pasando por Producto Terminado y Embarques.</p></div><div class="admin-kpi"><span>ORDEN FILTRADA</span><strong id="adminFilterLabel">Todas</strong></div></div>
+          <div class="admin-kpis"><div class="admin-kpi"><span>PALLETS REGISTRADOS</span><strong id="adminTotal">0</strong></div><div class="admin-kpi"><span>PENDIENTES</span><strong id="adminPending">0</strong></div><div class="admin-kpi"><span>RECIBIDOS</span><strong id="adminReceived">0</strong></div><div class="admin-kpi"><span>TOTAL PANELES</span><strong id="adminPanels">0</strong></div></div>
+
+          <div class="admin-flow-grid">
+            <article class="admin-flow-card">
+              <p class="eyebrow accent">PANELES</p>
+              <h3 id="adminPanelesTotal">0</h3>
+              <span id="adminPanelesStatus">Registrados</span>
+            </article>
+            <article class="admin-flow-card">
+              <p class="eyebrow accent">PRODUCTO TERMINADO</p>
+              <h3 id="adminTerminadoTotal">0</h3>
+              <span id="adminTerminadoStatus">Recibidos</span>
+            </article>
+            <article class="admin-flow-card">
+              <p class="eyebrow accent">EMBARQUES</p>
+              <h3 id="adminEmbarquesTotal">0</h3>
+              <span id="adminEmbarquesStatus">Validados</span>
+            </article>
+            <article class="admin-flow-card">
+              <p class="eyebrow accent">CONTENEDORES</p>
+              <h3 id="adminContainersTotal">0</h3>
+              <span id="adminContainersStatus">PO activas</span>
+            </article>
+          </div>
+
+          <div class="admin-grid">
+            <div class="admin-panel">
+              <div class="section-heading"><div><p class="eyebrow accent">RESUMEN POR ORDEN</p><h3>Flujo de Producción / PO</h3></div></div>
+              <div class="production-table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Producción / PO</th><th>Total</th><th>Recibidos</th><th>Embarcados</th><th>Paneles</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody id="adminPoBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="admin-panel">
+              <div class="section-heading"><div><p class="eyebrow accent">CONTENEDOR</p><h3>Por Producción / PO</h3></div><div class="production-filter admin-container-filter"><label for="adminContainerSelect">Elegir contenedor</label><select id="adminContainerSelect"><option value="">Todas</option></select></div></div>
+              <div class="admin-containers" id="adminContainers"></div>
+            </div>
+          </div>
+
+          <div class="admin-activity"><div class="section-heading"><div><p class="eyebrow accent">BITÁCORA</p><h3>Actividad del flujo</h3></div></div><div class="production-table-wrap"><table><thead><tr><th>Fecha y hora</th><th>Acción</th><th>Pallet</th><th>Producción / PO</th><th>Tipo</th><th>Estado</th></tr></thead><tbody id="adminActivityBody"></tbody></table><div class="empty-production" id="emptyAdmin">No hay movimientos registrados.</div></div></div>
+        </section>
+
+        <section class="workspace-grid" id="panelesView">
+          <div class="panel register-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow accent">NUEVA SALIDA</p>
+                <h3>Registrar pallet</h3>
+              </div>
+              <span class="step-badge">PASO 1 / 2</span>
+            </div>
+            <div class="tabs" role="tablist" aria-label="Método de registro">
+              <button class="tab active" data-mode="manual" role="tab" aria-selected="true">Ingreso manual</button>
+              <button class="tab" data-mode="qr" role="tab" aria-selected="false">Código QR</button>
+            </div>
+            <form id="palletForm">
+              <div class="form-grid">
+                <label>Item ID / código de pallet<input id="palletCode" type="text" placeholder="Ej. 6230011251" autocomplete="off" required /></label>
+                <label>Material<input id="material" type="text" placeholder="Ej. BAL5ASUJD Core SG 1.25&quot;" /></label>
+                <label>Especificación<input id="specification" type="text" placeholder="Ej. GEN-M-01-03019R04" /></label>
+                <label>Producción / PO<input id="productionOrder" type="text" placeholder="Ej. 26SZ7132" /></label>
+                <label>Orden de compra<input id="purchaseOrder" type="text" placeholder="Ej. 4400036519" /></label>
+                <label>Lote<input id="lotNumber" type="text" placeholder="Ej. 26199-26198" /></label>
+                <label>Tipo de pallet<select id="palletType" required><option value="" selected disabled>Selecciona una opción</option><option value="simple-b">Simple B</option><option value="simple-t">Simple T</option><option value="simple">Simple</option><option value="doble">Doble</option><option value="boxes">Boxes</option></select></label>
+                <label>Cantidad por caja<input id="quantitySheets" type="text" placeholder="Ej. 62 Sheets" /></label>
+                <label>Paneles por pallet<input id="quantityPanels" type="number" min="0" step="1" placeholder="Ej. 212" required /></label>
+                <label>Pallets de<select id="palletsThickness" required><option value="" selected disabled>Selecciona una opción</option><option value="2.5&quot;">2.5&quot;</option><option value="5&quot;">5&quot;</option></select></label>
+              </div>
+              <label>Observación <span class="optional">Opcional</span><textarea id="note" rows="2" placeholder="Ej. Línea 3 · turno tarde"></textarea></label>
+              <div class="qr-hint" id="qrHint"><span class="scan-icon">⌁</span><span>También puedes escribir o pegar aquí el contenido del QR. El lector del teléfono puede completar el código automáticamente.</span></div>
+              <button class="scan-button" id="scanButton" type="button"><span>▣</span> Escanear con cámara</button>
+              <video id="scannerVideo" class="scanner-video" autoplay muted playsinline hidden></video>
+              <button class="primary-button" type="submit"><span>Registrar salida</span><span class="button-arrow">→</span></button>
+              <p class="form-feedback" id="formFeedback" role="status"></p>
+            </form>
+          </div>
+
+          <aside class="panel summary-panel">
+            <div class="panel-heading compact"><div><p class="eyebrow accent">ESTADO DEL FLUJO</p><h3>Resumen del turno</h3></div></div>
+            <div class="summary-row"><span>Área de paneles</span><strong>Origen</strong></div>
+            <div class="summary-row"><span>En tránsito</span><strong id="transitCount">0</strong></div>
+            <div class="summary-row"><span>Producto terminado</span><strong class="green" id="receivedCount">0</strong></div>
+            <div class="completion-track"><div id="completionFill"></div></div>
+            <p class="summary-caption" id="completionText">Sin movimientos registrados</p>
+            <div class="tip-box"><span>i</span><p>Confirma el pallet al llegar a Producto Terminado para cerrar el recorrido.</p></div>
+          </aside>
+        </section>
+
+        <section class="receiving-view" id="terminadoView" hidden>
+          <div class="receiving-header"><div><p class="eyebrow accent">ÁREA DE PRODUCTO TERMINADO</p><h2>Recepción de pallets</h2><p>Revisa los pallets enviados desde Paneles y confirma cada ingreso recibido.</p></div><div class="pending-card"><span>PENDIENTES</span><strong id="pendingCount">0</strong></div></div>
+          <div class="receiving-toolbar"><div class="filter-tabs" role="tablist" aria-label="Filtro de recepción"><button class="filter-tab active" data-filter="pending">Pendientes</button><button class="filter-tab" data-filter="received">Recibidos</button><button class="filter-tab" data-filter="all">Todos</button></div><button class="text-button" id="clearButtonReceiving" type="button">Limpiar historial</button></div>
+          <div class="receiving-list" id="receivingList"></div>
+          <div class="empty-receiving" id="emptyReceiving" hidden><div class="empty-icon">✓</div><h3>No hay pallets en esta vista</h3><p>Los registros enviados desde Paneles aparecerán aquí.</p></div>
+        </section>
+
+        <section class="shipping-view" id="embarquesView" hidden>
+          <div class="receiving-header"><div><p class="eyebrow accent">CONTROL DE EMBARQUES</p><h2>Corroborar y embarcar</h2><p>Verifica el pallet recibido contra su Producción / PO y cantidad de paneles antes de embarcar.</p></div><div class="pending-card"><span>LISTOS PARA EMBARQUE</span><strong id="shippingCount">0</strong></div></div>
+          <section class="shipping-indicator-section"><div class="section-heading"><div><p class="eyebrow accent">INDICADOR DE CARGA</p><h3>Contenedor por Producción / PO</h3></div><div class="production-filter"><label for="shippingOrderSelect">Elegir contenedor</label><select id="shippingOrderSelect"><option value="">Selecciona una orden</option></select></div></div><div class="shipping-indicators" id="shippingIndicators"></div><div class="empty-production" id="emptyShippingIndicators">No hay órdenes disponibles para embarque.</div></section>
+          <div class="shipping-grid"><div class="shipping-queue" id="shippingQueue"></div><div class="panel shipping-form-panel"><div class="panel-heading compact"><div><p class="eyebrow accent">CORROBORACIÓN</p><h3>Validar pallet</h3></div><span class="step-badge">PASO 3 / 3</span></div><div class="tabs"><button class="tab active" id="shippingManualTab" type="button">Ingreso manual</button><button class="tab" id="shippingQrTab" type="button">Código QR</button></div><form id="shippingForm"><label>Item ID / código de pallet<input id="shippingCode" type="text" placeholder="Ej. 6230011251" required /></label><div class="shipping-check-grid"><label>Producción / PO<input id="shippingPo" type="text" placeholder="Ej. 26SZ002" required /></label><label>Paneles corroborados<input id="shippingPanels" type="number" min="0" step="1" placeholder="Ej. 212" required /></label><label>Material<input id="shippingMaterial" type="text" placeholder="Material del QR" /></label><label>Especificación<input id="shippingSpecification" type="text" placeholder="Especificación del QR" /></label><label>Orden de compra<input id="shippingPurchaseOrder" type="text" placeholder="Orden de compra" /></label><label>Lote<input id="shippingLotNumber" type="text" placeholder="Lote" /></label><label>Tipo de pallet<input id="shippingPalletType" type="text" placeholder="simple-b, simple-t, simple, doble o boxes" /></label><label>Cantidad por caja<input id="shippingQuantitySheets" type="text" placeholder="Cantidad por caja" /></label></div><label>Evidencias <span class="optional">Máximo 20 fotos o videos</span><input id="shippingEvidence" type="file" accept="image/*,video/*" multiple /></label><p class="evidence-count" id="evidenceCount">0 de 20 archivos seleccionados</p><button class="scan-button" id="shippingScanButton" type="button"><span>▣</span> Escanear QR</button><video id="shippingScannerVideo" class="scanner-video" autoplay muted playsinline hidden></video><button class="primary-button" type="submit"><span>Corroborar y marcar embarcado</span><span class="button-arrow">→</span></button><p class="form-feedback" id="shippingFeedback" role="status"></p></form></div></div>
+        </section>
+
+        <section class="production-section" id="productionSection">
+          <div class="section-heading"><div><p class="eyebrow accent">INDICADOR POR ORDEN</p><h3>Pallets por Producción / PO</h3></div><div class="production-filter"><label for="productionFilter">Filtrar PO</label><input id="productionFilter" type="search" placeholder="Ej. 26SZ097" autocomplete="off" /></div></div>
+          <div class="production-table-wrap"><table><thead><tr><th>Producción / PO</th><th>Simple B</th><th>Simple T</th><th>Simple</th><th>Doble</th><th>Boxes</th><th>Total pallets</th><th>Recibidos</th><th>Total paneles</th><th>Pendientes</th><th>Acción</th></tr></thead><tbody id="productionBody"></tbody></table><div class="empty-production" id="emptyProduction">Registra un pallet para comenzar el conteo por PO.</div></div>
+        </section>
+
+        <section class="history-section" id="historySection">
+          <div class="section-heading"><div><p class="eyebrow accent">ÚLTIMOS MOVIMIENTOS</p><h3>Historial de pallets</h3></div><button class="text-button" id="clearButton" type="button">Limpiar historial</button></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Pallet</th><th>Producción / PO</th><th>Paneles</th><th>Salida</th><th>Destino</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="historyBody"></tbody></table>
+            <div class="empty-state" id="emptyState"><div class="empty-icon">◌</div><p>Aún no hay pallets registrados</p><span>El primer movimiento del turno aparecerá aquí.</span></div>
+          </div>
+        </section>
+      </main>
+      <footer><span>Control de Pallets v1.0</span><span>Los registros se guardan en este dispositivo</span></footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

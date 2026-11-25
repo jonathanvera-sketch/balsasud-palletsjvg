@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#10263d" />
+  <title>BALSASUD · Sistema de Control de Despachos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:#10263d; --navy2:#1b4569; --blue:#3a7eae; --green:#278b62;
+      --green-soft:#eaf6ef; --red:#ce4b4b; --amber:#cf8527; --ink:#1d2d3d;
+      --muted:#657789; --line:#e3e9ed; --paper:#fff; --bg:#f3f5f6;
+      --shadow:0 22px 65px rgba(15,35,53,.12); --radius:22px;
+      --body:"DM Sans",system-ui,sans-serif; --display:"Barlow Condensed","DM Sans",sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0}
+    body{overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+    button{font:inherit}
+    .deck{position:relative;width:100vw;height:100vh;overflow:hidden;background:
+      radial-gradient(circle at 88% 10%,rgba(213,229,236,.56),transparent 30%),
+      linear-gradient(135deg,#f7f8f8,#edf2f4)}
+    .topline{position:absolute;z-index:20;left:0;right:0;top:0;height:7px;background:linear-gradient(90deg,var(--navy),#2f789c,var(--green))}
+    .brand{position:absolute;z-index:20;top:25px;left:5vw;display:flex;align-items:center;gap:11px;color:var(--navy);font-family:var(--display);font-weight:700;letter-spacing:2px}
+    .brand-mark{width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:#c9232c;color:#fff;font-size:21px;letter-spacing:0;box-shadow:0 7px 18px #9e1e2535}
+    .brand small{display:block;margin-top:2px;color:#8193a1;font:700 8px var(--body);letter-spacing:1.5px}
+    .slide-count{position:absolute;z-index:20;right:5vw;top:31px;color:#7f8d99;font-size:12px;font-weight:700}
+    .slide-count b{color:var(--navy)}
+    .progress{position:absolute;z-index:20;bottom:0;left:0;height:5px;width:0;background:var(--green);transition:width .3s}
+    .slides{position:absolute;inset:0}
+    .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:88px 8vw 86px;opacity:0;visibility:hidden;transform:translateX(26px) scale(.995);transition:opacity .35s,transform .35s,visibility .35s}
+    .slide.active{opacity:1;visibility:visible;transform:none}
+    .slide-inner{width:min(1180px,100%);max-height:100%;overflow:auto;padding:4px 5px 12px;scrollbar-width:thin}
+    .eyebrow{margin:0 0 11px;color:var(--green);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+    h1,h2,h3,h4,p{margin-top:0}
+    h1,h2,h3,h4{font-family:var(--display);color:var(--navy);line-height:1.02}
+    h1{font-size:clamp(52px,8vw,104px);margin:0;letter-spacing:-1px}
+    h2{font-size:clamp(38px,5.2vw,66px);margin:0 0 24px;letter-spacing:-.4px}
+    h3{font-size:24px;margin:0 0 9px}
+    h4{font-size:20px;margin:0 0 8px}
+    p{line-height:1.6}
+    .lead{max-width:760px;color:#596d7d;font-size:clamp(16px,2vw,21px);line-height:1.55}
+    .accent{color:var(--green)}
+    .muted{color:var(--muted)}
+    .small{font-size:12px;color:var(--muted);line-height:1.5}
+    .cover{color:#fff;background:
+      radial-gradient(circle at 80% 23%,rgba(91,171,143,.31),transparent 28%),
+      radial-gradient(circle at 4% 100%,rgba(52,113,155,.42),transparent 42%),
+      linear-gradient(130deg,#0d2238,#163c59 58%,#174c42)}
+    .cover .slide-inner{max-width:1120px}
+    .cover .eyebrow{color:#a8e3c0}
+    .cover h1{color:#fff}
+    .cover .lead{max-width:730px;color:#d7e2e9;margin:20px 0 0}
+    .cover .brand-mark{background:#c9232c}
+    .cover .brand{color:#fff}
+    .cover .brand small{color:#adc2d0}
+    .cover-bottom{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:50px;flex-wrap:wrap}
+    .cover-stats{display:flex;gap:12px;flex-wrap:wrap}
+    .cover-stat{min-width:130px;padding:13px 16px;border:1px solid #ffffff2a;border-radius:14px;background:#ffffff0c;backdrop-filter:blur(8px)}
+    .cover-stat b{display:block;font:700 26px var(--display);color:#fff}
+    .cover-stat span{font-size:10px;color:#b7cbd7;text-transform:uppercase;letter-spacing:1px}
+    .cover-tag{color:#c5d8e3;font-size:12px}
+    .grid{display:grid;gap:16px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:rgba(255,255,255,.91);border:1px solid rgba(220,229,235,.95);border-radius:18px;padding:21px;box-shadow:0 5px 18px rgba(20,45,64,.045)}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+    .card .icon{width:42px;height:42px;display:grid;place-items:center;margin-bottom:14px;border-radius:13px;background:#edf4f7;color:var(--navy2);font-size:21px}
+    .card.green .icon{background:var(--green-soft);color:var(--green)}
+    .card.amber .icon{background:#fff5e7;color:var(--amber)}
+    .card.red .icon{background:#fff0ef;color:var(--red)}
+    .card h3{font-size:22px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+    .list{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:11px}
+    .list li{display:flex;gap:10px;align-items:flex-start;color:#526677;font-size:14px;line-height:1.5}
+    .tick{flex:0 0 22px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:12px;font-weight:800}
+    .callout{padding:15px 17px;border-left:4px solid var(--blue);border-radius:0 13px 13px 0;background:#eff6fa;color:#456174;font-size:12px;line-height:1.55}
+    .callout.warn{border-color:var(--amber);background:#fff7ea;color:#7f5b2c}
+    .role{min-height:225px}
+    .role-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .role-icon{width:46px;height:46px;display:grid;place-items:center;flex:0 0 auto;border-radius:14px;background:#edf4f7;font-size:23px}
+    .role:nth-child(2) .role-icon{background:#eef4fb}
+    .role:nth-child(3) .role-icon{background:var(--green-soft)}
+    .role:nth-child(4) .role-icon{background:#fff5e7}
+    .role h3{margin:0;font-size:22px}
+    .role small{color:#8997a3;font-size:10px;text-transform:uppercase;letter-spacing:1px}
+    .role ul{margin:0;padding-left:17px;color:var(--muted);font-size:12px;line-height:1.85}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:30px 0 22px}
+    .flow-step{position:relative;min-height:150px;padding:16px 13px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 5px 18px #142d4008}
+    .flow-step:not(:last-child)::after{content:"";position:absolute;top:32px;right:-9px;width:10px;height:2px;background:#afc3d0}
+    .flow-step .num{display:grid;place-items:center;width:32px;height:32px;margin-bottom:15px;border-radius:50%;background:var(--navy);color:white;font:700 16px var(--display)}
+    .flow-step.done .num{background:var(--green)}
+    .flow-step h4{font-size:18px}
+    .flow-step p{font-size:10.5px;line-height:1.45;color:var(--muted);margin:0}
+    .source-panel{padding:24px;border-radius:20px;background:linear-gradient(135deg,#102b45,#1d526c);color:white;box-shadow:var(--shadow)}
+    .source-panel h3{color:#fff}
+    .source-panel p{color:#cfdee6;font-size:12px}
+    .doc-chip{display:inline-flex;align-items:center;gap:7px;margin:6px 5px 0 0;padding:9px 12px;border:1px solid #ffffff35;border-radius:99px;background:#ffffff10;color:#eef7fb;font-size:11px;font-weight:700}
+    .mini-ui{padding:16px;border:1px solid #dce5ea;border-radius:18px;background:#fff;box-shadow:var(--shadow)}
+    .mini-ui-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf1f3;padding-bottom:11px;margin-bottom:10px;font-size:11px;font-weight:700;color:var(--navy)}
+    .mini-ui-row{display:grid;grid-template-columns:1fr 1.25fr .7fr .65fr;gap:6px;padding:9px 5px;border-bottom:1px solid #f0f3f5;color:#647789;font-size:10px}
+    .mini-ui-row b{color:var(--ink)}
+    .mini-ui-row.head{padding-top:2px;color:#91a0aa;font-size:8px;letter-spacing:.7px;text-transform:uppercase}
+    .mini-badge{display:inline-block;padding:3px 7px;border-radius:99px;background:var(--green-soft);color:var(--green);font-size:8px;font-weight:800}
+    .mini-badge.amber{background:#fff2dc;color:#a96d20}
+    .record-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .record-stat{padding:13px;border-radius:13px;background:#f4f7f8}
+    .record-stat b{display:block;font:700 24px var(--display);color:var(--navy)}
+    .record-stat span{font-size:9px;color:#7d8d98;text-transform:uppercase;letter-spacing:.8px}
+    .parallel{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:25px 0}
+    .lane{padding:20px;border:1px solid var(--line);border-radius:17px;background:#fff}
+    .lane-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+    .lane-head .role-icon{margin:0}
+    .lane-head b{display:block;color:var(--navy);font-family:var(--display);font-size:20px}
+    .lane-head small{color:var(--muted);font-size:10px}
+    .lane-row{display:flex;align-items:center;gap:9px;margin-top:9px;color:#5d7181;font-size:11px}
+    .lane-row i{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .parallel-mark{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#e8f0f5;color:var(--navy2);font-size:23px;font-weight:800}
+    .container-wrap{display:grid;grid-template-columns:1.4fr .75fr;gap:20px;align-items:stretch}
+    .container-card{padding:20px;border-radius:20px;background:linear-gradient(150deg,#eaf0f2,#f9fbfb);border:1px solid #dbe4e9}
+    .container-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+    .container-title b{font:700 20px var(--display);color:var(--navy)}
+    .container-title span{font-size:10px;color:var(--muted)}
+    .pallet-rows{display:grid;gap:6px}
+    .pallet-row{display:grid;grid-template-columns:30px repeat(4,1fr);gap:6px;align-items:center}
+    .pallet-row label{color:#8b9aa4;font-size:9px;font-weight:700}
+    .pallet{height:24px;border-radius:5px;background:linear-gradient(90deg,#bf935e,#d8b27e);border:1px solid #b08a5b;box-shadow:inset 0 -4px #987348}
+    .boxes-panel{display:flex;flex-direction:column;justify-content:center;padding:20px;border:1px solid #f0dfc4;border-radius:18px;background:#fff8ed}
+    .boxes-panel b{font:700 29px var(--display);color:#a96d20}
+    .boxes-panel .box-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:13px 0}
+    .box{height:22px;border:1px solid #e0bd8c;border-radius:4px;background:#f6e3c8}
+    .boxes-panel p{margin:0;color:#8f714e;font-size:11px}
+    .reconcile{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:26px 0 15px}
+    .source-total{position:relative;padding:20px;border:1px solid var(--line);border-radius:17px;background:#fff;text-align:center}
+    .source-total span{display:block;color:#85939e;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+    .source-total b{display:block;margin:7px 0 4px;color:var(--navy);font:700 38px var(--display)}
+    .source-total small{color:var(--green);font-size:10px;font-weight:700}
+    .eq{position:absolute;right:-14px;top:43%;z-index:2;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e9f5ee;color:var(--green);font-weight:800}
+    .source-total:last-child .eq{display:none}
+    .control-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    .control{display:flex;gap:13px;padding:17px;border:1px solid var(--line);border-radius:16px;background:#fff}
+    .control-icon{flex:0 0 35px;width:35px;height:35px;display:grid;place-items:center;border-radius:11px;background:#eef4f7;color:var(--navy2);font-size:17px}
+    .control b{display:block;margin:1px 0 4px;color:var(--navy);font-size:13px}
+    .control p{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+    .audit-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px;padding:13px 15px;border-radius:13px;background:#102b45;color:#d9e5eb;font-size:10px}
+    .audit-strip strong{color:#fff}
+    .audit-strip em{font-style:normal;color:#9bd7b1}
+    .document-layout{display:grid;grid-template-columns:1.1fr .75fr;gap:30px;align-items:center}
+    .acta{padding:25px;border:1px solid #dce5ea;border-radius:12px;background:#fff;box-shadow:var(--shadow)}
+    .acta-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-bottom:12px;border-bottom:2px solid var(--navy)}
+    .acta-brand{font:700 16px var(--display);letter-spacing:1px;color:var(--navy)}
+    .acta-brand small{display:block;font:700 7px var(--body);letter-spacing:1px;color:#8998a3}
+    .acta-code{text-align:right;font-size:8px;color:var(--muted)}
+    .acta h3{margin:14px 0 3px;font-size:22px}
+    .acta-sub{color:var(--green);font-size:8px;font-weight:800;letter-spacing:.6px}
+    .acta-table{margin-top:12px}
+    .acta-line{display:grid;grid-template-columns:1.2fr 1fr .65fr .65fr;padding:7px 4px;border-bottom:1px solid #edf1f3;color:#667987;font-size:8px}
+    .acta-line.head{color:#84939e;font-size:7px;font-weight:800;letter-spacing:.5px}
+    .signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}
+    .signature{text-align:center;padding-top:12px;border-top:1px solid #9eabb4}
+    .signature b{display:block;color:var(--navy);font-size:8px}
+    .signature span{display:block;margin-top:3px;color:#8b99a3;font-size:6px;text-transform:uppercase}
+    .signature small{display:block;margin-top:4px;color:#a2adb5;font-size:6px}
+    .phone-area{display:flex;flex-direction:column;align-items:center}
+    .phone{width:250px;height:475px;padding:8px;border:3px solid #182b3d;border-radius:38px;background:#0c1d2d;box-shadow:0 24px 50px #10263d30}
+    .phone-screen{height:100%;padding:22px 14px 13px;border-radius:29px;background:#f8fafb;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+    .phone-notch{position:absolute;width:72px;height:15px;margin-top:-18px;border-radius:0 0 10px 10px;background:#0c1d2d}
+    .phone-logo{width:32px;height:32px;display:grid;place-items:center;margin:9px 0;border-radius:9px;background:var(--navy);color:#fff;font:700 19px var(--display)}
+    .phone h3{margin:2px 0;font-size:21px;text-align:center}
+    .phone-url{color:#8292a0;font-size:8px}
+    .check-circle{width:58px;height:58px;display:grid;place-items:center;margin:16px auto 8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 7px #e3f3e9;color:#fff;font-size:30px}
+    .phone-result{color:var(--green);font:700 19px var(--display)}
+    .phone-caption{color:#7a8994;font-size:8px}
+    .phone-data{width:100%;margin-top:14px;padding:9px 11px;border:1px solid #e2e9ed;border-radius:11px;background:#fff}
+    .phone-data div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f3f5;font-size:8px;color:#788995}
+    .phone-data div:last-child{border:0}
+    .phone-data b{color:var(--navy)}
+    .hashbox{width:100%;margin-top:10px;padding:9px;border-radius:10px;background:#0c2a47;color:#9be0bb}
+    .hashbox label{display:block;margin-bottom:5px;color:#9eb1bf;font-size:6px;font-weight:800;letter-spacing:1px}
+    .hashbox code{font-size:7px;word-break:break-all}
+    .phone-foot{margin-top:auto;color:#93a0aa;font-size:7px;text-align:center}
+    .integrity-note{max-width:260px;margin:12px 0 0;text-align:center;color:#8795a0;font-size:9px;line-height:1.45}
+    .benefit-big{padding:22px;border-radius:19px;background:linear-gradient(135deg,#102b45,#1a4d5c);color:#fff}
+    .benefit-big b{display:block;font:700 31px var(--display);color:#fff}
+    .benefit-big span{display:block;margin-top:5px;color:#c5d6df;font-size:11px}
+    .result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+    .result-card{padding:18px 15px;border:1px solid #dfe7eb;border-radius:15px;background:#fff;text-align:center}
+    .result-card b{display:block;color:var(--navy);font:700 31px var(--display)}
+    .result-card span{font-size:9px;color:#7a8b98;text-transform:uppercase;letter-spacing:.7px}
+    .closing{background:linear-gradient(135deg,#10263d,#18495b 60%,#176342);color:#fff}
+    .closing h2{color:#fff}
+    .closing .eyebrow{color:#a8e3c0}
+    .closing .lead{color:#d2e0e6}
+    .controls{position:absolute;z-index:30;right:5vw;bottom:24px;display:flex;align-items:center;gap:8px}
+    .nav-btn{width:42px;height:42px;border:1px solid #dce5ea;border-radius:50%;background:#fff;color:var(--navy);box-shadow:0 6px 18px #10263d12;font-size:21px;cursor:pointer;transition:transform .15s,background .15s}
+    .nav-btn:hover{transform:translateY(-2px);background:#f1f6f8}
+    .nav-btn:disabled{opacity:.4;cursor:default;transform:none}
+    .key-hint{margin-right:6px;color:#8795a0;font-size:10px}
+    .slide-number{position:absolute;z-index:20;bottom:34px;left:5vw;color:#8b99a4;font-size:10px;letter-spacing:.4px}
+    .demo-note{margin-top:12px;color:#85939d;font-size:10px}
+    @media(max-width:900px){
+      .slide{padding:82px 6vw 82px}
+      .grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .flow{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .flow-step:nth-child(3)::after{display:none}
+      .container-wrap,.document-layout{grid-template-columns:1fr}
+      .phone-area{display:none}
+      .split{gap:22px}
+    }
+    @media(max-width:620px){
+      .brand{top:17px;left:18px}.brand-mark{width:32px;height:32px}
+      .brand{font-size:14px}.brand small{font-size:7px}
+      .slide-count{top:27px;right:18px}
+      .slide{padding:72px 18px 76px;align-items:flex-start}
+      .slide-inner{margin:auto 0;max-height:100%}
+      h2{font-size:38px;margin-bottom:18px}
+      .grid.two,.grid.three,.grid.four,.split{grid-template-columns:1fr}
+      .card{padding:16px}
+      .role{min-height:0}
+      .flow{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .flow-step{min-height:125px;padding:12px}
+      .flow-step::after{display:none}
+      .parallel{grid-template-columns:1fr}
+      .parallel-mark{margin:auto;transform:rotate(90deg)}
+      .reconcile{gap:6px}
+      .source-total{padding:14px 7px}
+      .source-total b{font-size:28px}
+      .eq{right:-12px;width:22px;height:22px}
+      .control-grid{grid-template-columns:1fr}
+      .result-grid{grid-template-columns:repeat(2,1fr)}
+      .container-wrap{grid-template-columns:1fr}
+      .cover-bottom{margin-top:28px}
+      .cover-stat{min-width:105px;padding:10px}
+      .cover-stat b{font-size:22px}
+      .acta{padding:16px}
+      .controls{right:16px;bottom:14px}
+      .nav-btn{width:38px;height:38px}
+      .key-hint{display:none}
+      .slide-number{left:18px;bottom:28px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+    }
+  </style>
+</head>
+<body>
+<main class="deck" aria-label="Presentación BALSASUD">
+  <div class="topline"></div>
+  <div class="brand"><span class="brand-mark">B</span><span>BALSASUD<small>CONTROL DE DESPACHOS</small></span></div>
+  <div class="slide-count"><b id="current">01</b> / <span id="total">17</span></div>
+  <div class="progress" id="progress"></div>
+  <div class="slide-number">Sistema ERP · Presentación ejecutiva</div>
+
+  <div class="slides" id="slides">
+    <section class="slide cover active">
+      <div class="slide-inner">
+        <p class="eyebrow">ERP de trazabilidad · Planta de paneles de balsa</p>
+        <h1>Un despacho.<br><span style="color:#9fe0b8">Cada pallet</span><br>en su lugar.</h1>
+        <p class="lead">De la fuente oficial a la salida del contenedor: registro, inspección, conciliación y cierre con responsables y evidencia.</p>
+        <div class="cover-bottom">
+          <div class="cover-stats">
+            <div class="cover-stat"><b>4 áreas</b><span>Un mismo flujo</span></div>
+            <div class="cover-stat"><b>Por pallet</b><span>Trazabilidad granular</span></div>
+            <div class="cover-stat"><b>QR + SHA-256</b><span>Verificación de acta</span></div>
+          </div>
+          <span class="cover-tag">Presentación del sistema · BALSASUD S.A.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">01 · El desafío operativo</p>
+        <h2>¿Cómo evitar que un pallet<br>se pierda en el proceso?</h2>
+        <p class="lead">Cuando las áreas registran en archivos distintos, una diferencia puede descubrirse recién al cargar o cerrar el embarque.</p>
+        <div class="grid four" style="margin-top:25px">
+          <article class="card red"><div class="icon">↔</div><h3>Datos duplicados</h3><p>TALLY, registros de PT y Calidad pueden quedar separados o desactualizados.</p></article>
+          <article class="card amber"><div class="icon">⌛</div><h3>Esperas</h3><p>La inspección secuencial retrasa el avance de la carga.</p></article>
+          <article class="card"><div class="icon">?</div><h3>Responsabilidad difusa</h3><p>Cuesta identificar quién preparó o revisó cada unidad física.</p></article>
+          <article class="card green"><div class="icon">▤</div><h3>Documentos dispersos</h3><p>Fotos, aprobaciones y actas pueden terminar en carpetas diferentes.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner split">
+        <div>
+          <p class="eyebrow">02 · La solución</p>
+          <h2>Una sola orden.<br><span class="accent">Una historia completa.</span></h2>
+          <p class="lead">BALSASUD conecta la documentación autorizada con los registros físicos de PT, Calidad y Embarque.</p>
+          <ul class="list">
+            <li><span class="tick">✓</span><span>Información por orden, ITEM ID, espesor y pallet/caja.</span></li>
+            <li><span class="tick">✓</span><span>Calidad puede inspeccionar desde que PT registra el primer pallet.</span></li>
+            <li><span class="tick">✓</span><span>La liberación depende de una conciliación completa y aprobada.</span></li>
+            <li><span class="tick">✓</span><span>Actas, firmas, QR y auditoría quedan vinculados al embarque.</span></li>
+          </ul>
+        </div>
+        <div class="source-panel">
+          <p class="eyebrow" style="color:#a8e3c0">Una plataforma · cuatro áreas</p>
+          <h3 style="font-size:32px">La operación comparte el mismo estado.</h3>
+          <p>El equipo puede seguir qué se autorizó, qué se registró, qué se inspeccionó y qué está listo para el siguiente paso.</p>
+          <span class="doc-chip">TALLY / FOR-OP-31</span><span class="doc-chip">Registro PT</span>
+          <span class="doc-chip">Control de Calidad</span><span class="doc-chip">Jefe de Embarque</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">03 · Roles y responsabilidades</p>
+        <h2>Cada área ve lo que necesita.<br><span class="accent">El sistema registra quién actúa.</span></h2>
+        <div class="grid four">
+          <article class="card role"><div class="role-top"><span class="role-icon">🧭</span><div><small>Gobierno del flujo</small><h3>Superadmin</h3></div></div><ul><li>Crea y publica órdenes</li><li>Revisa fuentes y diferencias</li><li>Libera, cierra o reabre con motivo</li></ul></article>
+          <article class="card role"><div class="role-top"><span class="role-icon">📦</span><div><small>Preparación</small><h3>Producto Terminado</h3></div></div><ul><li>Registra pallet/caja y cantidad</li><li>Adjunta evidencia disponible</li><li>Puede indicar responsable físico</li></ul></article>
+          <article class="card role"><div class="role-top"><span class="role-icon">🔎</span><div><small>Inspección</small><h3>Calidad</h3></div></div><ul><li>Inspecciona cada unidad</li><li>Aprueba, rechaza o solicita corrección</li><li>Puede indicar inspector físico</li></ul></article>
+          <article class="card role"><div class="role-top"><span class="role-icon">🚚</span><div><small>Carga física</small><h3>Jefe de Embarque</h3></div></div><ul><li>Confirma pallet por pallet</li><li>Distribuye en filas del contenedor</li><li>Registra despacho y acta final</li></ul></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">04 · Flujo integral</p>
+        <h2>Del documento al cierre,<br><span class="accent">con puntos de control.</span></h2>
+        <div class="flow">
+          <article class="flow-step done"><span class="num">1</span><h4>Fuente</h4><p>Superadmin carga TALLY o Detalle de embarque.</p></article>
+          <article class="flow-step done"><span class="num">2</span><h4>Publicación</h4><p>Revisa datos y habilita la orden para operación.</p></article>
+          <article class="flow-step done"><span class="num">3</span><h4>Registro PT</h4><p>Registra cada pallet/caja y su cantidad física.</p></article>
+          <article class="flow-step done"><span class="num">4</span><h4>Calidad</h4><p>Inspección unidad por unidad, en paralelo con PT.</p></article>
+          <article class="flow-step done"><span class="num">5</span><h4>Conciliación</h4><p>Compara autorización, reporte y aprobación.</p></article>
+          <article class="flow-step done"><span class="num">6</span><h4>Embarque</h4><p>Distribuye, libera, despacha y cierra con actas.</p></article>
+        </div>
+        <div class="callout">La secuencia visual guía al usuario. Las acciones críticas siguen sujetas a sus permisos y validaciones existentes.</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner split">
+        <div>
+          <p class="eyebrow">05 · Lectura de fuentes</p>
+          <h2>De PDFs a datos<br><span class="accent">listos para revisar.</span></h2>
+          <p class="lead">La orden puede iniciar desde los documentos operativos, reduciendo la reescritura manual de cantidades y productos.</p>
+          <ul class="list">
+            <li><span class="tick">✓</span><span>Lectura del TALLY SHEET y del Detalle de embarque FOR-OP-31.</span></li>
+            <li><span class="tick">✓</span><span>Previsualización y revisión antes de publicar.</span></li>
+            <li><span class="tick">✓</span><span>El Detalle no incluye ITEM ID: el sistema propone uno según espesor y requiere confirmación.</span></li>
+            <li><span class="tick">✓</span><span>Las diferencias o datos no reconocidos deben revisarse, no se silencian.</span></li>
+          </ul>
+        </div>
+        <div>
+          <div class="source-panel">
+            <p class="eyebrow" style="color:#a8e3c0">Revisión previa</p>
+            <h3>Documento → productos → autorización</h3>
+            <p>La fuente oficial permanece asociada a la orden y sirve como referencia durante la conciliación.</p>
+            <span class="doc-chip">📄 TALLY SHEET</span><span class="doc-chip">📑 FOR-OP-31</span>
+          </div>
+          <div class="callout warn" style="margin-top:14px">Las propuestas automáticas de ITEM ID son sugerencias; requieren confirmación del Superadministrador.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner split">
+        <div>
+          <p class="eyebrow">06 · Trazabilidad por unidad</p>
+          <h2>La unidad de control<br>es el <span class="accent">pallet.</span></h2>
+          <p class="lead">Cada registro conecta la identificación del producto con la cantidad, el empaque, el estado de inspección y las personas responsables.</p>
+          <div class="record-stats">
+            <div class="record-stat"><b>P-01</b><span>Identificador</span></div>
+            <div class="record-stat"><b>384</b><span>Paneles</span></div>
+            <div class="record-stat"><b>OK</b><span>Calidad</span></div>
+          </div>
+          <ul class="list">
+            <li><span class="tick">✓</span><span>Usuario del sistema y fecha/hora quedan registrados.</span></li>
+            <li><span class="tick">✓</span><span>Nombre del responsable físico de PT e inspector pueden anotarse opcionalmente por unidad.</span></li>
+            <li><span class="tick">✓</span><span>Observaciones y evidencias se conservan con el registro.</span></li>
+          </ul>
+        </div>
+        <div class="mini-ui">
+          <div class="mini-ui-head"><span>CONTROL DE PALLETS · OD-2026-0001</span><span class="mini-badge">En seguimiento</span></div>
+          <div class="mini-ui-row head"><span>Pallet</span><span>Producto</span><span>Paneles</span><span>Calidad</span></div>
+          <div class="mini-ui-row"><b>P-01</b><span>6230010251 · 6.3 mm</span><b>384</b><span class="mini-badge">Aprobado</span></div>
+          <div class="mini-ui-row"><b>P-02</b><span>6230010501 · 12.7 mm</span><b>192</b><span class="mini-badge">Aprobado</span></div>
+          <div class="mini-ui-row"><b>P-03</b><span>6230010501 · 12.7 mm</span><b>192</b><span style="color:#c88527">Pendiente</span></div>
+          <div class="mini-ui-row"><b>P-04</b><span>6230010501 · 12.7 mm</span><b>192</b><span class="mini-badge">Aprobado</span></div>
+          <div class="callout" style="margin-top:13px">Ejemplo visual. La vista real muestra las columnas y acciones habilitadas para el rol autenticado.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">07 · Calidad en paralelo</p>
+        <h2>PT registra. Calidad revisa.<br><span class="accent">La operación no tiene que esperar.</span></h2>
+        <p class="lead">Calidad puede inspeccionar un pallet desde que está registrado, aunque PT todavía esté preparando los siguientes.</p>
+        <div class="parallel">
+          <div class="lane">
+            <div class="lane-head"><span class="role-icon">📦</span><div><b>Producto Terminado</b><small>Registro progresivo</small></div></div>
+            <div class="lane-row"><i></i><span>Registra P-01 + cantidad + evidencia</span></div>
+            <div class="lane-row"><i></i><span>Continúa con P-02, P-03…</span></div>
+            <div class="lane-row"><i></i><span>Completa y envía su entrega</span></div>
+          </div>
+          <div class="parallel-mark">↔</div>
+          <div class="lane">
+            <div class="lane-head"><span class="role-icon">🔎</span><div><b>Calidad</b><small>Inspección sin espera</small></div></div>
+            <div class="lane-row"><i></i><span>Ve P-01 al registrarse</span></div>
+            <div class="lane-row"><i></i><span>Verifica identificación, cantidad y empaque</span></div>
+            <div class="lane-row"><i></i><span>Aprueba, rechaza o solicita corrección</span></div>
+          </div>
+        </div>
+        <div class="callout">La liberación final todavía exige cumplir todos los criterios de conciliación y aprobación. El trabajo en paralelo no omite controles.</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">08 · Retorno de pallet corregido</p>
+        <h2>Se corrige en PT.<br><span class="accent">Calidad reinspecciona.</span></h2>
+        <p class="lead">El mismo pallet conserva su trazabilidad. Después de una corrección, no se considera aprobado hasta que Calidad lo revise de nuevo.</p>
+        <div class="flow" style="grid-template-columns:repeat(3,minmax(0,1fr));max-width:900px">
+          <article class="flow-step"><span class="num">1</span><h4>Calidad devuelve</h4><p>Rechaza o solicita corrección y registra el motivo.</p></article>
+          <article class="flow-step"><span class="num">2</span><h4>PT corrige</h4><p>Edita el mismo pallet. Su estado cambia a “Corregido · pendiente de reinspección”.</p></article>
+          <article class="flow-step done"><span class="num">3</span><h4>Calidad reinspecciona</h4><p>Abre el pallet y lo aprueba explícitamente para continuar.</p></article>
+        </div>
+        <div class="callout warn" style="margin:0 0 18px">El estado corregido se muestra en ámbar y mantiene bloqueada la liberación hasta la aprobación de Calidad.</div>
+        <div class="grid three">
+          <article class="card"><div class="icon">▤</div><h3>Tablas de pallets</h3><p>Visible para Producto Terminado y Calidad, con acción de reinspección.</p></article>
+          <article class="card"><div class="icon">⌕</div><h3>Filtro de Calidad</h3><p>Filtro “Corregidos” para encontrar rápidamente los pallets pendientes.</p></article>
+          <article class="card"><div class="icon">▣</div><h3>Resumen y documentos</h3><p>Se refleja en el resumen de inspección, el acta y las exportaciones CSV.</p></article>
+          <article class="card"><div class="icon">▦</div><h3>Control global</h3><p>El control individual de pallets permite identificar este estado.</p></article>
+          <article class="card amber"><div class="icon">⚠</div><h3>Conciliación</h3><p>Aparece como hallazgo ámbar y bloquea la liberación mientras falte reinspección.</p></article>
+          <article class="card amber"><div class="icon">↺</div><h3>Estado del despacho</h3><p>La orden muestra “Corregido · pendiente de reinspección” mientras haya pallets en retorno.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">09 · Carga física</p>
+        <h2>Una distribución diseñada<br>para el <span class="accent">contenedor real.</span></h2>
+        <div class="container-wrap">
+          <div class="container-card">
+            <div class="container-title"><b>Contenedor · 9 filas × 4 pallets</b><span>36 ubicaciones de pallet</span></div>
+            <div class="pallet-rows" id="palletRows"></div>
+          </div>
+          <aside class="boxes-panel">
+            <span class="eyebrow" style="color:#a96d20">Fila 10 · Puerta</span>
+            <b>12 cajas</b>
+            <div class="box-grid" id="boxGrid"></div>
+            <p>Separadas de los pallets en el conteo y en la distribución.</p>
+          </aside>
+        </div>
+        <p class="small" style="margin-top:14px">El planificador permite distribuir la carga y al Jefe de Embarque revisar cada pallet antes de autorizarlo.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">10 · Conciliación y estados</p>
+        <h2>Tres fuentes comparadas.<br><span class="accent">Una condición para liberar.</span></h2>
+        <div class="reconcile">
+          <div class="source-total"><span>Autorizado · TALLY</span><b>4.425</b><small>Paneles programados</small><i class="eq">=</i></div>
+          <div class="source-total"><span>Reportado · PT</span><b>4.425</b><small>Paneles registrados</small><i class="eq">=</i></div>
+          <div class="source-total"><span>Aprobado · Calidad</span><b>4.425</b><small>Paneles inspeccionados</small></div>
+        </div>
+        <div class="grid three">
+          <article class="card green"><div class="icon">✓</div><h3>Conciliado</h3><p>Las cantidades coinciden por ITEM ID y espesor.</p></article>
+          <article class="card amber"><div class="icon">…</div><h3>Pendiente</h3><p>Falta registrar, inspeccionar o completar un requisito.</p></article>
+          <article class="card red"><div class="icon">!</div><h3>Diferencia</h3><p>La liberación se bloquea hasta revisar el hallazgo.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">11 · Controles operativos</p>
+        <h2>Los controles acompañan<br><span class="accent">cada decisión crítica.</span></h2>
+        <div class="control-grid">
+          <article class="control"><span class="control-icon">🔐</span><div><b>Acceso por rol</b><p>Las opciones y vistas visibles se adaptan al permiso del usuario.</p></div></article>
+          <article class="control"><span class="control-icon">✓</span><div><b>Validaciones de cantidades</b><p>Se verifican límites autorizados y estados antes de avanzar.</p></div></article>
+          <article class="control"><span class="control-icon">⛔</span><div><b>Bloqueos de liberación</b><p>Diferencias, inspecciones pendientes o criterios incompletos impiden cerrar el paso.</p></div></article>
+          <article class="control"><span class="control-icon">📷</span><div><b>Evidencia asociada</b><p>Fotos y observaciones respaldan registros e inspecciones.</p></div></article>
+          <article class="control"><span class="control-icon">🧾</span><div><b>Auditoría</b><p>Las acciones importantes registran usuario, momento, acción y motivo cuando corresponde.</p></div></article>
+          <article class="control"><span class="control-icon">🔒</span><div><b>Escrituras controladas</b><p>La arquitectura backend contempla operaciones protegidas y manejo de concurrencia.</p></div></article>
+        </div>
+        <div class="audit-strip"><strong>Ejemplo de trazabilidad</strong><span>Usuario</span><em>→</em><span>Acción</span><em>→</em><span>Fecha/hora</span><em>→</em><span>Orden + pallet</span><em>→</em><span>Resultado / motivo</span></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">12 · Documentos y verificación</p>
+        <h2>El cierre deja evidencia<br><span class="accent">para consultar después.</span></h2>
+        <div class="document-layout">
+          <div class="acta">
+            <div class="acta-head"><div class="acta-brand">BALSASUD S.A.<small>CONTROL DE DESPACHOS</small></div><div class="acta-code">ACTA DE LIBERACIÓN<br>OD-2026-0001 · CoreLite</div></div>
+            <h3>Acta de liberación de despacho</h3><div class="acta-sub">CONCILIADO · LIBERADO · CERRADO</div>
+            <div class="acta-table">
+              <div class="acta-line head"><span>ESPESOR</span><span>ITEM ID</span><span>TALLY</span><span>CALIDAD</span></div>
+              <div class="acta-line"><span>6.3 mm</span><span>6230010251</span><b>534</b><b>534</b></div>
+              <div class="acta-line"><span>12.7 mm</span><span>6230010501</span><b>1.689</b><b>1.689</b></div>
+              <div class="acta-line"><span>19.1 mm</span><span>6230010751</span><b>574</b><b>574</b></div>
+              <div class="acta-line"><span>25.4 mm</span><span>6230011001</span><b>1.040</b><b>1.040</b></div>
+              <div class="signatures">
+                <div class="signature"><b>Superadmin</b><span>Planificación</span><small>Usuario · fecha/hora</small></div>
+                <div class="signature"><b>Producto Terminado</b><span>Entrega</span><small>Usuario · fecha/hora</small></div>
+                <div class="signature"><b>Calidad</b><span>Inspección</span><small>Usuario · fecha/hora</small></div>
+              </div>
+            </div>
+            <div class="callout" style="margin-top:15px">El acta puede incluir nombres de responsables físicos por pallet cuando se registraron.</div>
+          </div>
+          <div class="phone-area">
+            <div class="phone"><div class="phone-screen">
+              <div class="phone-notch"></div><div class="phone-logo">B</div>
+              <h3>Verificación de acta</h3><span class="phone-url">palletsordenjvg.netlify.app</span>
+              <div class="check-circle">✓</div><div class="phone-result">DOCUMENTO ÍNTEGRO</div><div class="phone-caption">El hash coincide con los datos incluidos</div>
+              <div class="phone-data"><div><span>Acta</span><b>OD-2026-0001</b></div><div><span>Lote</span><b>26207</b></div><div><span>Paneles</span><b>4.425</b></div><div><span>Estado</span><b style="color:var(--green)">Cerrado</b></div></div>
+              <div class="hashbox"><label>HASH SHA-256 · ILUSTRATIVO</label><code>9494f32d210d672e8d6a11ec6e6b894b<br>39e2e2308c740dabff627844b1ceccde</code></div>
+              <div class="phone-foot">BALSASUD · Verificación del acta</div>
+            </div></div>
+            <p class="integrity-note">Mockup conceptual inspirado en la página de verificación. La validación central requiere consultar el hash oficial del backend.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner split">
+        <div>
+        <p class="eyebrow">13 · Plataforma y datos</p>
+          <h2>Una plataforma web.<br><span class="accent">Datos conectados al proceso.</span></h2>
+          <p class="lead">El sistema se compone de una interfaz operativa, servicios backend, hojas de control y archivos de respaldo/evidencia.</p>
+          <ul class="list">
+            <li><span class="tick">✓</span><span>Interfaz web adaptable a computadora, tablet y celular.</span></li>
+            <li><span class="tick">✓</span><span>Google Apps Script como capa de servicios de la operación.</span></li>
+            <li><span class="tick">✓</span><span>Google Sheets para los registros estructurados del sistema.</span></li>
+            <li><span class="tick">✓</span><span>Google Drive para documentos y carpetas por año, mes y embarque.</span></li>
+          </ul>
+        </div>
+        <div class="grid" style="gap:10px">
+          <div class="control"><span class="control-icon">🖥</span><div><b>Aplicación BALSASUD</b><p>Vistas de trabajo diferenciadas por rol.</p></div></div>
+          <div class="control"><span class="control-icon">⚙</span><div><b>Apps Script API</b><p>Servicios para registrar, validar y auditar operaciones.</p></div></div>
+          <div class="control"><span class="control-icon">▦</span><div><b>Sheets + Drive</b><p>Datos estructurados, documentos y evidencias del embarque.</p></div></div>
+          <div class="callout warn">El funcionamiento conectado en producción depende de la configuración vigente del endpoint y permisos de Google.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">14 · Disponibilidad multi-dispositivo</p>
+        <h2>Mismo sistema.<br><span class="accent">Desde cualquier pantalla.</span></h2>
+        <p class="lead">BALSASUD es una aplicación web. No importa si el usuario entra desde una computadora de oficina, una tablet en planta o un celular en el patio de carga: ve el mismo estado de la orden.</p>
+        <div class="grid four" style="margin-top:22px">
+          <article class="card"><div class="icon">🌐</div><h3>Web responsive</h3><p>La interfaz se adapta a computadora, tablet y celular.</p></article>
+          <article class="card green"><div class="icon">🔐</div><h3>Acceso por usuario</h3><p>Cada persona ingresa con su rol y solo ve las funciones que le corresponden.</p></article>
+          <article class="card"><div class="icon">☁</div><h3>Datos centralizados</h3><p>La información vive en Google Sheets y Drive, no en el dispositivo.</p></article>
+          <article class="card amber"><div class="icon">↻</div><h3>Sincronización</h3><p>Lo que registra un usuario se refleja para los demás al actualizar.</p></article>
+        </div>
+        <div class="callout" style="margin-top:18px">Ejemplo: Calidad puede rechazar un pallet desde su celular y Producto Terminado lo verá corregido/pendiente al entrar desde otra computadora.</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="eyebrow">15 · Beneficios y resultado simulado</p>
+        <h2>Menos incertidumbre.<br><span class="accent">Más control por pallet.</span></h2>
+        <div class="grid four">
+          <article class="card"><div class="icon">⏱</div><h3>Fluidez</h3><p>PT y Calidad avanzan en paralelo, unidad por unidad.</p></article>
+          <article class="card green"><div class="icon">🎯</div><h3>Exactitud</h3><p>Las tres fuentes se comparan antes de liberar.</p></article>
+          <article class="card"><div class="icon">👥</div><h3>Responsabilidad</h3><p>Queda el usuario de sistema y se puede anotar al responsable físico.</p></article>
+          <article class="card amber"><div class="icon">📂</div><h3>Respaldo</h3><p>Inspecciones, evidencias, auditoría y actas reunidas por orden.</p></article>
+        </div>
+        <div class="result-grid">
+          <div class="result-card"><b>4.425</b><span>Paneles del TALLY</span></div>
+          <div class="result-card"><b>36</b><span>Pallets registrados</span></div>
+          <div class="result-card"><b>12</b><span>Cajas registradas</span></div>
+          <div class="result-card"><b>48/48</b><span>Unidades aprobadas</span></div>
+        </div>
+        <div class="callout">Resultado de una simulación con OP 26SZ140 · lote 26207. Conciliación: 4.425 TALLY = 4.425 PT = 4.425 Calidad. Orden cerrada en entorno de prueba.</div>
+      </div>
+    </section>
+
+    <section class="slide closing">
+      <div class="slide-inner">
+        <p class="eyebrow">BALSASUD · Control de Despachos</p>
+        <h2>Del primer registro<br>al último pallet del contenedor.</h2>
+        <p class="lead">Un proceso compartido. Controles visibles. Responsables identificables. Evidencia lista para consultar.</p>
+        <div class="cover-bottom">
+          <div class="cover-stats">
+            <div class="cover-stat"><b>TALLY</b><span>Fuente autorizada</span></div>
+            <div class="cover-stat"><b>PT + Calidad</b><span>Trabajo coordinado</span></div>
+            <div class="cover-stat"><b>Acta + QR</b><span>Cierre verificable</span></div>
+          </div>
+          <span class="cover-tag">BALSASUD S.A. · Ecuador</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="controls" aria-label="Controles de presentación">
+    <span class="key-hint">Usa ← → o la barra espaciadora</span>
+    <button class="nav-btn" id="prev" type="button" aria-label="Diapositiva anterior">‹</button>
+    <button class="nav-btn" id="next" type="button" aria-label="Diapositiva siguiente">›</button>
+  </div>
+</main>
+<script>
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const currentLabel = document.getElementById("current");
+  const progress = document.getElementById("progress");
+  const prevButton = document.getElementById("prev");
+  const nextButton = document.getElementById("next");
+  let current = 0;
+
+  function updateSlide(index) {
+    current = Math.max(0, Math.min(index, slides.length - 1));
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === current));
+    currentLabel.textContent = String(current + 1).padStart(2, "0");
+    document.getElementById("total").textContent = String(slides.length).padStart(2, "0");
+    progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+    prevButton.disabled = current === 0;
+    nextButton.disabled = current === slides.length - 1;
+    history.replaceState(null, "", `#slide-${current + 1}`);
+  }
+  prevButton.addEventListener("click", () => updateSlide(current - 1));
+  nextButton.addEventListener("click", () => updateSlide(current + 1));
+  document.addEventListener("keydown", event => {
+    if (event.key === "ArrowRight" || event.key === " ") { event.preventDefault(); updateSlide(current + 1); }
+    if (event.key === "ArrowLeft") { event.preventDefault(); updateSlide(current - 1); }
+    if (event.key === "Home") updateSlide(0);
+    if (event.key === "End") updateSlide(slides.length - 1);
+  });
+  const requestedSlide = Number((location.hash.match(/slide-(\d+)/) || [])[1] || 1);
+  updateSlide(requestedSlide - 1);
+
+  const palletRows = document.getElementById("palletRows");
+  for (let row = 1; row <= 9; row++) {
+    const element = document.createElement("div");
+    element.className = "pallet-row";
+    element.innerHTML = `<label>${String(row).padStart(2,"0")}</label>${"<span class='pallet'></span>".repeat(4)}`;
+    palletRows.appendChild(element);
+  }
+  document.getElementById("boxGrid").innerHTML = "<span class='box'></span>".repeat(12);
+</script>
+</body>
+</html>

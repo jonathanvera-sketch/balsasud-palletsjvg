@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BALSASUD · Control de Despachos v2.3.5</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0a2540;
+      --navy-light: #12365a;
+      --green: #2e9e6b;
+      --green-dark: #1a4d2e;
+      --green-light: #e8f5ee;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --bg: #f5f8fb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --white: #ffffff;
+      --shadow: 0 10px 40px rgba(10,37,64,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    h1, h2, h3, .eyebrow, .stat-number { font-family: 'Barlow Condensed', sans-serif; }
+    .deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 6vh 8vw;
+      opacity: 0; pointer-events: none; transform: translateX(40px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0); z-index: 2; }
+    .slide.prev { transform: translateX(-40px); }
+
+    .brand-strip {
+      position: absolute; top: 0; left: 0; right: 0; height: 8px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--green) 100%);
+      z-index: 10;
+    }
+    .logo {
+      position: absolute; top: 28px; left: 8vw;
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.4rem;
+      color: var(--navy); z-index: 10;
+    }
+    .logo span { width: 36px; height: 36px; background: var(--red); color: #fff; display: grid; place-items: center; border-radius: 8px; }
+    .slide-counter {
+      position: absolute; bottom: 28px; right: 8vw;
+      color: var(--muted); font-size: 0.85rem; z-index: 10;
+    }
+
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.85rem; color: var(--green-dark); font-weight: 700; margin-bottom: 12px; }
+    h1 { font-size: clamp(2.8rem, 6vw, 5rem); line-height: 0.95; color: var(--navy); }
+    h2 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; color: var(--navy); margin-bottom: 2rem; }
+    h2 .accent { color: var(--green); }
+    p.lead { font-size: clamp(1.1rem, 2vw, 1.5rem); color: var(--muted); max-width: 760px; margin-top: 1.2rem; line-height: 1.5; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; width: 100%; max-width: 1200px; }
+    .center { text-align: center; }
+    .left { text-align: left; align-items: flex-start; }
+
+    .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; width: 100%; max-width: 1100px; margin-top: 1rem; }
+    .card {
+      background: var(--white); border-radius: 20px; padding: 32px 24px;
+      box-shadow: var(--shadow); text-align: center;
+      border-top: 6px solid var(--green);
+      transition: transform 0.2s;
+    }
+    .card:nth-child(1) { border-color: var(--red); }
+    .card:nth-child(2) { border-color: var(--navy); }
+    .card:nth-child(3) { border-color: var(--green); }
+    .card:nth-child(4) { border-color: var(--amber); }
+    .card:hover { transform: translateY(-6px); }
+    .card .icon { font-size: 3rem; margin-bottom: 16px; }
+    .card h3 { font-size: 1.4rem; margin-bottom: 10px; color: var(--navy); }
+    .card p { color: var(--muted); font-size: 0.95rem; line-height: 1.4; }
+
+    .role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; width: 100%; max-width: 1200px; margin-top: 1rem; }
+    .role {
+      background: var(--white); border-radius: 20px; overflow: hidden;
+      box-shadow: var(--shadow); text-align: center;
+    }
+    .role-avatar {
+      height: 160px; display: grid; place-items: center; font-size: 5rem;
+      background: var(--green-light);
+    }
+    .role:nth-child(1) .role-avatar { background: #eff6ff; }
+    .role:nth-child(2) .role-avatar { background: #fffbeb; }
+    .role:nth-child(3) .role-avatar { background: #f0fdf4; }
+    .role:nth-child(4) .role-avatar { background: #fef2f2; }
+    .role .body { padding: 24px; }
+    .role h3 { font-size: 1.25rem; color: var(--navy); margin-bottom: 6px; }
+    .role p { color: var(--muted); font-size: 0.85rem; }
+
+    .steps { display: flex; gap: 16px; width: 100%; max-width: 1100px; margin-top: 1rem; }
+    .step {
+      flex: 1; background: var(--white); border-radius: 16px; padding: 24px 18px;
+      box-shadow: var(--shadow); position: relative; text-align: center;
+    }
+    .step::before {
+      content: attr(data-num); position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+      width: 36px; height: 36px; background: var(--navy); color: #fff; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 700; font-family: 'Barlow Condensed', sans-serif;
+    }
+    .step h4 { margin-top: 12px; color: var(--navy); font-size: 1.05rem; }
+    .step p { color: var(--muted); font-size: 0.82rem; margin-top: 8px; line-height: 1.35; }
+
+    .screenshot { border-radius: 16px; box-shadow: var(--shadow); max-width: 100%; max-height: 58vh; object-fit: contain; border: 1px solid #e2e8f0; }
+
+    /* Demo slideshow */
+    .demo-slideshow {
+      width: 100%; max-width: 900px; background: var(--white); border-radius: 20px;
+      box-shadow: var(--shadow); overflow: hidden; position: relative;
+    }
+    .demo-slides { display: flex; transition: transform 0.6s ease; }
+    .demo-slide { min-width: 100%; padding: 24px 24px 0; text-align: center; }
+    .demo-slide img { width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .demo-caption { padding: 16px 24px 24px; color: var(--muted); font-size: 0.95rem; }
+    .demo-controls {
+      position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);
+      display: flex; justify-content: space-between; padding: 0 12px; pointer-events: none;
+    }
+    .demo-controls button {
+      pointer-events: auto; width: 40px; height: 40px; border-radius: 50%; border: none;
+      background: rgba(10,37,64,0.7); color: #fff; font-size: 1.2rem; cursor: pointer;
+    }
+    .demo-dots { display: flex; justify-content: center; gap: 8px; padding-bottom: 16px; }
+    .demo-dots button { width: 10px; height: 10px; border-radius: 50%; border: none; background: #cbd5e1; cursor: pointer; }
+    .demo-dots button.active { background: var(--navy); }
+    .demo-player {
+      width: min(900px, 84vw); background: #fff; border-radius: 20px;
+      box-shadow: var(--shadow); overflow: hidden; text-align: left;
+    }
+    .demo-stage {
+      height: min(48vh, 390px); min-height: 270px; position: relative; overflow: hidden;
+      background: linear-gradient(#dff2f3 0 64%, #c9d8c8 64% 100%);
+    }
+    .demo-scene {
+      position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: space-around;
+      padding: 24px 9% 0; opacity: 0; transform: translateX(24px);
+      transition: opacity .6s ease, transform .6s ease; pointer-events: none;
+    }
+    .demo-scene.active { opacity: 1; transform: translateX(0); }
+    .scene-sun { position: absolute; width: 62px; height: 62px; border-radius: 50%; background: #ffe6a3; right: 8%; top: 10%; }
+    .scene-label {
+      position: absolute; top: 18px; left: 20px; padding: 8px 13px; border-radius: 999px;
+      background: #fff; color: var(--navy); font-size: 13px; font-weight: 700; box-shadow: 0 3px 12px #0a254022;
+    }
+    .scene-pallets { display: flex; gap: 9px; align-items: flex-end; height: 68%; }
+    .wood-stack { width: 82px; height: 112px; border-bottom: 9px solid #765333; display: flex; flex-direction: column-reverse; gap: 3px; }
+    .wood-stack span { display: block; height: 21px; border-radius: 3px; background: repeating-linear-gradient(90deg,#bc8d56 0 18px,#d7ae75 18px 22px); border: 1px solid #9c7449; }
+    .worker { width: 120px; height: 230px; position: relative; flex: 0 0 120px; }
+    .worker .head { position: absolute; width: 56px; height: 60px; border-radius: 48% 48% 45% 45%; top: 19px; left: 33px; background: #bd7957; z-index: 2; }
+    .worker .hair { position: absolute; width: 60px; height: 29px; top: 14px; left: 31px; border-radius: 50% 50% 25% 25%; background: #30251f; z-index: 3; }
+    .worker .vest { position: absolute; width: 72px; height: 102px; top: 78px; left: 25px; background: #2e9e6b; clip-path: polygon(22% 0,78% 0,100% 100%,0 100%); z-index: 1; }
+    .worker .vest:after { content: ""; position: absolute; left: 32px; height: 100%; width: 5px; background: #ffe08a; }
+    .worker .arm { position: absolute; width: 16px; height: 92px; top: 85px; left: 15px; border-radius: 12px; background: #bd7957; transform: rotate(22deg); transform-origin: top; }
+    .worker .arm.right { left: 91px; transform: rotate(-38deg); }
+    .worker .leg { position: absolute; width: 22px; height: 65px; top: 174px; left: 38px; background: #233a55; border-radius: 0 0 8px 8px; }
+    .worker .leg.right { left: 66px; }
+    .worker .tablet {
+      position: absolute; width: 82px; height: 62px; top: 112px; left: 79px; border: 6px solid #24394d;
+      border-radius: 8px; background: #fff; transform: rotate(-7deg); z-index: 4; padding: 7px;
+      box-shadow: 0 5px 10px #0a254033;
+    }
+    .tablet .ui-top { height: 8px; background: var(--navy); border-radius: 2px; margin-bottom: 5px; }
+    .tablet .ui-line { height: 4px; background: #dbe4ea; margin: 4px 0; border-radius: 3px; }
+    .tablet .ui-ok { position: absolute; right: 7px; bottom: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--green); color: #fff; font-size: 10px; text-align: center; line-height: 14px; }
+    .qc-person .vest { background: #2563a5; }
+    .qc-person .hair { background: #533a2b; }
+    .scene-container { position: absolute; right: 5%; bottom: 0; width: 44%; height: 68%; border: 12px solid #35536a; border-bottom: 0; background: repeating-linear-gradient(90deg,#dae5e5 0 24px,#c6d5d7 24px 28px); }
+    .scene-container:before { content: "CONTENEDOR"; position: absolute; top: 10px; left: 15px; font-size: 11px; font-weight: 700; color: #35536a; letter-spacing: .12em; }
+    .scene-board {
+      position: absolute; width: 260px; height: 155px; right: 10%; top: 27%; background: white; border-radius: 12px;
+      box-shadow: 0 12px 28px #0a254033; padding: 13px; transform: rotate(-2deg);
+    }
+    .scene-board strong { color: var(--navy); font-size: 14px; }
+    .scene-board .bar { height: 13px; margin-top: 8px; border-radius: 4px; background: #e8eff2; }
+    .scene-board .bar.green { width: 82%; background: #c9f0da; }
+    .demo-meta { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 8px; }
+    .demo-caption { color: var(--navy); font-size: 14px; font-weight: 600; }
+    .demo-time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .demo-controls { position: static; inset: auto; transform: none; display: flex; align-items: center; gap: 12px; padding: 5px 20px 16px; }
+    .demo-play {
+      border: 0; border-radius: 999px; background: var(--navy); color: white; padding: 8px 16px;
+      font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .demo-track { height: 7px; flex: 1; border-radius: 8px; overflow: hidden; background: #e3e9ed; }
+    .demo-progress { width: 0; height: 100%; background: var(--green); }
+
+    .nav-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--white); border: none; box-shadow: var(--shadow);
+      cursor: pointer; font-size: 1.4rem; color: var(--navy); z-index: 10;
+      display: grid; place-items: center;
+    }
+    .nav-btn:hover { background: var(--navy); color: #fff; }
+    .prev-btn { left: 2vw; }
+    .next-btn { right: 2vw; }
+    .progress {
+      position: absolute; bottom: 0; left: 0; height: 6px;
+      background: var(--green); transition: width 0.4s; z-index: 10;
+    }
+
+    /* Force only one slide visible at a time */
+    .slide:not(.active) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+    .slide.active { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; z-index: 2 !important; }
+
+    @media (max-width: 900px) {
+      .two-col, .card-grid, .role-grid, .steps { grid-template-columns: 1fr; flex-direction: column; }
+      .slide { padding: 10vh 6vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="brand-strip"></div>
+  <div class="logo"><span>B</span> BALSASUD</div>
+  <div class="slide-counter"><span id="current">1</span> / <span id="total">9</span></div>
+  <div class="progress" id="progress"></div>
+
+  <button class="nav-btn prev-btn" onclick="prevSlide()">‹</button>
+  <button class="nav-btn next-btn" onclick="nextSlide()">›</button>
+
+  <main class="deck" id="deck">
+
+    <!-- Slide 1 -->
+    <section class="slide active center" style="background: linear-gradient(135deg, #0a2540 0%, #12365a 50%, #2e9e6b 100%); color: #fff;">
+      <div style="max-width: 900px;">
+        <p class="eyebrow" style="color: #a7f3d0;">Control de despachos · v2.3.5</p>
+        <h1 style="color: #fff; font-size: clamp(3rem, 7vw, 6rem);">BALSASUD</h1>
+        <p class="lead" style="color: #e2e8f0;">Trazabilidad total de embarques de pallets de paneles de balsa:<br>TALLY → Producto Terminado → Calidad → Jefe de Embarque.</p>
+        <p style="margin-top: 2rem; color: #94a3b8; font-size: 0.95rem;">Google Sheets · Google Drive · Firma digital · PDFs automáticos</p>
+      </div>
+    </section>
+
+    <!-- Slide 2 -->
+    <section class="slide center">
+      <p class="eyebrow">El problema</p>
+      <h2>¿Por qué se pierden pallets<br>antes de salir de planta?</h2>
+      <div class="card-grid" style="max-width: 1000px;">
+        <div class="card"><div class="icon">📄</div><h3>Papel y Excel</h3><p>Cada área anota lo mismo en archivos distintos. Nadie ve los datos en tiempo real.</p></div>
+        <div class="card"><div class="icon">⏱️</div><h3>Esperas innecesarias</h3><p>Calidad no podía inspeccionar hasta que PT terminaba toda la carga.</p></div>
+        <div class="card"><div class="icon">❓</div><h3>Sin trazabilidad</h3><p>Cuando falta un pallet, no hay registro claro de quién lo aprobó y cuándo.</p></div>
+        <div class="card"><div class="icon">✍️</div><h3>Firmas manuales</h3><p>Los actas se firmaban en papel, se escaneaban y se guardaban en carpetas sueltas.</p></div>
+      </div>
+    </section>
+
+    <!-- Slide 3 -->
+    <section class="slide">
+      <div class="two-col">
+        <div class="left">
+          <p class="eyebrow">La solución</p>
+          <h2>ERP de trazabilidad<br><span class="accent">sin papeles</span></h2>
+          <p class="lead">Un solo sistema compartido entre Superadministración, Producto Terminado, Calidad y Jefe de Embarque. Todos ven la misma orden, el mismo TALLY y los mismos pallets.</p>
+          <ul style="margin-top: 1.5rem; color: var(--muted); line-height: 2; list-style: none;">
+            <li>✅ 15 hojas de Google Sheets como base de datos</li>
+            <li>✅ Carpetas automáticas en Google Drive por embarque</li>
+            <li>✅ PDFs firmados por cada etapa + acta final</li>
+            <li>✅ Acceso desde celular, tablet o computadora</li>
+          </ul>
+        </div>
+        <div>
+          <img src="presentacion_balsasud_assets/login.jpg" alt="Pantalla de inicio de sesión de BALSASUD" class="screenshot" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4 -->
+    <section class="slide center">
+      <p class="eyebrow">Lo más importante</p>
+      <h2>¿Qué gano yo?</h2>
+      <div class="card-grid">
+        <div class="card"><div class="icon">🛡️</div><h3>Me protege</h3><p>Si lo hice bien, queda comprobado. Se acaban las culpas sin pruebas.</p></div>
+        <div class="card"><div class="icon">⚡</div><h3>Me ahorra tiempo</h3><p>Registro una vez. Sin repetir datos ni buscar papeles.</p></div>
+        <div class="card"><div class="icon">🎯</div><h3>Me da claridad</h3><p>Sé qué hacer, en qué orden y qué sigue.</p></div>
+        <div class="card"><div class="icon">🏆</div><h3>Me hace visible</h3><p>Mi esfuerzo y mi orden se reconocen con datos.</p></div>
+      </div>
+    </section>
+
+    <!-- Slide 5 -->
+    <section class="slide center">
+      <p class="eyebrow">Roles</p>
+      <h2>Cada área ve solo lo que le toca</h2>
+      <div class="role-grid">
+        <div class="role">
+          <div class="role-avatar">🧑‍💼</div>
+          <div class="body"><h3>Superadministrador</h3><p>Crea embarques, carga TALLY o Detalle de embarque, activa y publica órdenes.</p></div>
+        </div>
+        <div class="role">
+          <div class="role-avatar">👷‍♀️</div>
+          <div class="body"><h3>Producto Terminado</h3><p>Registra pallets y cajas uno por uno con evidencia fotográfica.</p></div>
+        </div>
+        <div class="role">
+          <div class="role-avatar">👩‍🔬</div>
+          <div class="body"><h3>Calidad</h3><p>Inspecciona, aprueba o rechaza cada pallet y firma la liberación final.</p></div>
+        </div>
+        <div class="role">
+          <div class="role-avatar">👷‍♂️</div>
+          <div class="body"><h3>Jefe de Embarque</h3><p>Autoriza pallets, distribuye en filas y firma el acta final de embarque.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6 -->
+    <section class="slide center">
+      <p class="eyebrow">Flujo</p>
+      <h2>Del TALLY al contenedor en <span class="accent">5 pasos</span></h2>
+      <div class="steps">
+        <div class="step" data-num="1"><h4>Cargar documento</h4><p>Superadmin sube el TALLY o el Detalle de embarque FOR-OP-31. El sistema lee OP, espesores y empaques.</p></div>
+        <div class="step" data-num="2"><h4>PT registra</h4><p>Producto Terminado escanea o ingresa cada pallet/caja con fotos y cantidades.</p></div>
+        <div class="step" data-num="3"><h4>Calidad inspecciona</h4><p>Calidad revisa y aprueba/rechaza pallet por pallet, sin esperar a que termine PT.</p></div>
+        <div class="step" data-num="4"><h4>Jefe distribuye</h4><p>El Jefe de Embarque confirma cada pallet y lo ubica en las 9 filas + Fila 10 de cajas.</p></div>
+        <div class="step" data-num="5"><h4>Acta firmada</h4><p>El sistema genera el PDF final con firmas, responsables físicos y QR de verificación SHA-256.</p></div>
+      </div>
+    </section>
+
+    <!-- Slide 7 -->
+    <section class="slide">
+      <div class="two-col">
+        <div class="left">
+          <p class="eyebrow">Novedades v2.3.5</p>
+          <h2>¿Qué trae <span class="accent">la versión nueva?</span></h2>
+          <ul style="margin-top: 1rem; color: var(--text); line-height: 2.2; list-style: none; font-size: 1.05rem;">
+            <li>📄 <b>Lector del Detalle de embarque FOR-OP-31</b> además del TALLY.</li>
+            <li>📦 <b>36 pallets + 12 cajas</b>: las cajas van automáticamente a la Fila 10.</li>
+            <li>🔒 <b>Pestañas por rol</b>: PT no ve Calidad ni Actas.</li>
+            <li>⚡ <b>Inspección inmediata</b>: Calidad ya no espera el envío de PT.</li>
+            <li>🔐 <b>QR de verificación</b> con hash SHA-256 en el acta final.</li>
+            <li>🧑‍🔧 <b>Responsables físicos</b> opcionales por pallet e inspector de Calidad.</li>
+            <li>🎄 <b>Tema navideño</b> del 15 de noviembre al 31 de diciembre.</li>
+          </ul>
+        </div>
+        <div>
+          <img src="presentacion_balsasud_assets/superadmin.jpg" alt="Superadministrador cargando el TALLY" class="screenshot" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Demo animada -->
+    <section class="slide center">
+      <p class="eyebrow">Demo</p>
+      <h2>Personas usando <span class="accent">BALSASUD</span></h2>
+      <div class="demo-player" aria-label="Demostración animada del flujo BALSASUD">
+        <div class="demo-stage">
+          <div class="demo-scene active" data-caption="Producto Terminado registra el pallet y sus datos." data-label="1 · PRODUCTO TERMINADO">
+            <span class="scene-sun"></span><span class="scene-label">1 · PRODUCTO TERMINADO</span>
+            <div class="scene-pallets"><div class="wood-stack"><span></span><span></span><span></span><span></span></div><div class="wood-stack"><span></span><span></span><span></span><span></span></div></div>
+            <div class="worker"><i class="hair"></i><i class="head"></i><i class="arm"></i><i class="arm right"></i><i class="vest"></i><i class="leg"></i><i class="leg right"></i><div class="tablet"><div class="ui-top"></div><div class="ui-line"></div><div class="ui-line"></div><div class="ui-ok">✓</div></div></div>
+          </div>
+          <div class="demo-scene" data-caption="Calidad inspecciona y aprueba cada pallet, sin esperar a que PT termine toda la carga." data-label="2 · CONTROL DE CALIDAD">
+            <span class="scene-sun"></span><span class="scene-label">2 · CONTROL DE CALIDAD</span>
+            <div class="scene-pallets"><div class="wood-stack"><span></span><span></span><span></span><span></span></div><div class="wood-stack"><span></span><span></span><span></span><span></span></div></div>
+            <div class="worker qc-person"><i class="hair"></i><i class="head"></i><i class="arm"></i><i class="arm right"></i><i class="vest"></i><i class="leg"></i><i class="leg right"></i><div class="tablet"><div class="ui-top"></div><div class="ui-line"></div><div class="ui-line"></div><div class="ui-ok">✓</div></div></div>
+          </div>
+          <div class="demo-scene" data-caption="El Jefe de Embarque confirma los pallets y revisa su ubicación en el contenedor." data-label="3 · JEFE DE EMBARQUE">
+            <span class="scene-sun"></span><span class="scene-label">3 · JEFE DE EMBARQUE</span>
+            <div class="scene-container"></div>
+            <div class="scene-pallets"><div class="wood-stack"><span></span><span></span><span></span><span></span></div></div>
+            <div class="worker"><i class="hair"></i><i class="head"></i><i class="arm"></i><i class="arm right"></i><i class="vest"></i><i class="leg"></i><i class="leg right"></i><div class="tablet"><div class="ui-top"></div><div class="ui-line"></div><div class="ui-line"></div><div class="ui-ok">✓</div></div></div>
+          </div>
+          <div class="demo-scene" data-caption="El sistema reúne las aprobaciones y deja la trazabilidad del embarque." data-label="4 · TRAZABILIDAD">
+            <span class="scene-sun"></span><span class="scene-label">4 · TRAZABILIDAD</span>
+            <div class="scene-pallets"><div class="wood-stack"><span></span><span></span><span></span><span></span></div></div>
+            <div class="scene-board"><strong>BALSASUD · RESUMEN DE EMBARQUE</strong><div class="bar"></div><div class="bar green"></div><div class="bar"></div><div class="bar green"></div><div class="bar green"></div></div>
+            <div class="worker"><i class="hair"></i><i class="head"></i><i class="arm"></i><i class="arm right"></i><i class="vest"></i><i class="leg"></i><i class="leg right"></i></div>
+          </div>
+        </div>
+        <div class="demo-meta">
+          <div class="demo-caption" id="demoCaption">Producto Terminado registra el pallet y sus datos.</div>
+          <div class="demo-time" id="demoTime">00:00 / 00:16</div>
+        </div>
+        <div class="demo-controls">
+          <button class="demo-play" id="demoPlay" type="button" onclick="toggleDemo()">❚❚ Pausar</button>
+          <div class="demo-track"><div class="demo-progress" id="demoProgress"></div></div>
+          <button class="demo-play" type="button" onclick="restartDemo()">↺ Reiniciar</button>
+        </div>
+      </div>
+      <p style="margin-top: 10px; color: var(--muted); font-size: .82rem;">Demo ilustrativa del flujo; no es una grabación de usuarios reales.</p>
+    </section>
+
+    <!-- Slide 9 -->
+    <section class="slide active center" style="background: linear-gradient(135deg, #0a2540 0%, #1a4d2e 100%); color: #fff;">
+      <div style="max-width: 800px;">
+        <h2 style="color: #fff;">Cero despachos sin <span style="color: #a7f3d0;">conciliar</span></h2>
+        <p class="lead" style="color: #e2e8f0;">TALLY = Producto Terminado = Calidad.<br>Todos firman, todos quedan registrados.</p>
+        <p style="margin-top: 3rem; color: #94a3b8;">BALSASUD S.A. · Planta de paneles de madera de balsa · Ecuador</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+    function update() {
+      slides.forEach((s, i) => {
+        s.classList.remove('active', 'prev');
+        if (i === current) s.classList.add('active');
+        else if (i < current) s.classList.add('prev');
+      });
+      document.getElementById('current').textContent = current + 1;
+      document.getElementById('total').textContent = slides.length;
+      document.getElementById('progress').style.width = ((current + 1) / slides.length * 100) + '%';
+    }
+    function nextSlide() { if (current < slides.length - 1) { current++; update(); } }
+    function prevSlide() { if (current > 0) { current--; update(); } }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+    // Optional deep-link: ?slide=2 starts on slide 2 without transition
+    const slideParam = new URLSearchParams(location.search).get('slide');
+    if (slideParam) {
+      const n = parseInt(slideParam, 10) - 1;
+      if (n >= 0 && n < slides.length) current = n;
+    }
+    update();
+
+    /* Short animated walkthrough for the roles */
+    let demoFrames = [];
+    let demoElapsed = 0;
+    let demoPlaying = true;
+    let demoLastTick = 0;
+    const demoDuration = 16;
+    function paintDemo() {
+      if (!demoFrames.length) return;
+      const frame = Math.min(demoFrames.length - 1, Math.floor(demoElapsed / (demoDuration / demoFrames.length)));
+      demoFrames.forEach((el, i) => el.classList.toggle('active', i === frame));
+      document.getElementById('demoCaption').textContent = demoFrames[frame].dataset.caption;
+      const secs = Math.floor(demoElapsed);
+      document.getElementById('demoTime').textContent = '00:' + String(secs).padStart(2, '0') + ' / 00:' + demoDuration;
+      document.getElementById('demoProgress').style.width = (demoElapsed / demoDuration * 100) + '%';
+      document.getElementById('demoPlay').textContent = demoPlaying ? '❚❚ Pausar' : '▶ Reproducir';
+    }
+    function toggleDemo() {
+      demoPlaying = !demoPlaying;
+      if (demoElapsed >= demoDuration) demoElapsed = 0;
+      demoLastTick = performance.now();
+      paintDemo();
+    }
+    function restartDemo() {
+      demoElapsed = 0;
+      demoPlaying = true;
+      demoLastTick = performance.now();
+      paintDemo();
+    }
+    function animateDemo(now) {
+      if (!demoFrames.length) demoFrames = Array.from(document.querySelectorAll('.demo-scene'));
+      if (demoFrames.length) {
+        if (!demoLastTick) demoLastTick = now;
+        const delta = Math.min((now - demoLastTick) / 1000, .1);
+        demoLastTick = now;
+        if (demoPlaying) {
+          demoElapsed += delta;
+          if (demoElapsed >= demoDuration) {
+            demoElapsed = demoDuration;
+            demoPlaying = false;
+          }
+          paintDemo();
+        }
+      }
+      requestAnimationFrame(animateDemo);
+    }
+    requestAnimationFrame(animateDemo);
+  </script>
+</body>
+</html>

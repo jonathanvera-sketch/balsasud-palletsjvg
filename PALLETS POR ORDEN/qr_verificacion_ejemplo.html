@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>BALSASUD · Verificación QR del acta</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1400px; height: 820px; overflow: hidden;
+    font-family: 'DM Sans', sans-serif; color: #1f2937;
+    background:
+      radial-gradient(circle at 12% 18%, #e8f0f7 0, transparent 42%),
+      radial-gradient(circle at 88% 82%, #e7f5ee 0, transparent 40%),
+      #eef2f6;
+    display: flex; align-items: center; justify-content: center; gap: 54px;
+    padding: 42px 56px; position: relative;
+  }
+  body:before {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(#c9d6e2 1px, transparent 1px);
+    background-size: 26px 26px; opacity: .35;
+  }
+  .title-wrap { position: absolute; top: 26px; left: 56px; z-index: 3; }
+  .title-wrap .eyebrow { font-size: 12px; letter-spacing: .22em; font-weight: 700; color: #2e9e6b; text-transform: uppercase; }
+  .title-wrap h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 34px; color: #0a2540; line-height: 1; margin-top: 4px; }
+
+  /* ---------- ACTA ---------- */
+  .acta {
+    width: 520px; height: 700px; background: #fff; border-radius: 6px;
+    box-shadow: 0 26px 60px rgba(10,37,64,.22), 0 3px 8px rgba(10,37,64,.12);
+    padding: 34px 36px 26px; position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+  }
+  .acta-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0a2540; padding-bottom: 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .b { width: 34px; height: 34px; border-radius: 7px; background: #dc2626; color: #fff; display: grid; place-items: center; font-family: 'Barlow Condensed'; font-weight: 700; font-size: 22px; }
+  .brand b { font-family: 'Barlow Condensed'; font-size: 20px; color: #0a2540; letter-spacing: .02em; }
+  .brand small { display: block; font-size: 8px; letter-spacing: .18em; color: #64748b; font-weight: 600; }
+  .doc-type { text-align: right; font-size: 9px; color: #64748b; line-height: 1.5; }
+  .doc-type b { display: block; font-size: 11px; color: #0a2540; letter-spacing: .06em; }
+  .acta h2 { font-family: 'Barlow Condensed'; font-size: 24px; color: #0a2540; margin-top: 16px; letter-spacing: .01em; }
+  .acta .sub { font-size: 10px; color: #2e9e6b; font-weight: 700; letter-spacing: .08em; margin-top: 2px; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-top: 14px; }
+  .meta div span { display: block; font-size: 7.5px; text-transform: uppercase; letter-spacing: .1em; color: #94a3b8; font-weight: 700; }
+  .meta div b { font-size: 11px; color: #0a2540; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 9.5px; }
+  th { background: #f1f5f9; color: #475569; text-align: left; padding: 5px 6px; font-size: 7.5px; text-transform: uppercase; letter-spacing: .06em; }
+  td { padding: 5px 6px; border-bottom: 1px solid #eef2f6; color: #334155; }
+  td.num, th.num { text-align: right; }
+  tfoot td { font-weight: 700; color: #0a2540; border-top: 2px solid #0a2540; border-bottom: 0; }
+  .verdict { margin-top: 10px; font-size: 9px; font-weight: 700; color: #1a7a4f; background: #e8f7ef; border-left: 3px solid #2e9e6b; padding: 6px 9px; border-radius: 3px; }
+
+  .signatures { display: flex; gap: 18px; margin-top: auto; padding-top: 12px; }
+  .signature { flex: 1; text-align: center; }
+  .sig-line { height: 1px; background: #94a3b8; margin-bottom: 5px; }
+  .signature b { display: block; font-size: 9.5px; color: #0a2540; }
+  .signature span { display: block; font-size: 7px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
+  .signature small { display: block; font-size: 7px; color: #94a3b8; margin-top: 2px; }
+
+  .qr-block { position: absolute; right: 34px; bottom: 96px; text-align: center; }
+  .qr-frame { width: 108px; height: 108px; padding: 6px; background: #fff; border: 1px solid #dbe4ea; border-radius: 6px; box-shadow: 0 4px 12px rgba(10,37,64,.08); }
+  .qr-frame canvas, .qr-frame img { width: 100% !important; height: 100% !important; display: block; }
+  .qr-block small { display: block; font-size: 6.5px; color: #64748b; letter-spacing: .12em; font-weight: 700; margin-top: 5px; }
+  .doc-foot { margin-top: 10px; display: flex; justify-content: space-between; font-size: 6.5px; color: #94a3b8; border-top: 1px solid #eef2f6; padding-top: 7px; }
+
+  /* ---------- PHONE ---------- */
+  .phone-wrap { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+  .phone {
+    width: 290px; height: 590px; background: #0b1a2b; border-radius: 42px; padding: 11px;
+    box-shadow: 0 34px 70px rgba(10,37,64,.30), inset 0 0 0 2px #24394d;
+  }
+  .screen { width: 100%; height: 100%; border-radius: 32px; background: #f7fafc; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .status { display: flex; justify-content: space-between; padding: 12px 18px 4px; font-size: 10px; color: #0a2540; font-weight: 700; }
+  .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 84px; height: 18px; background: #0b1a2b; border-radius: 12px; }
+  .screen-head { padding: 16px 20px 0; text-align: center; }
+  .screen-head .mini-logo { width: 34px; height: 34px; margin: 0 auto 8px; border-radius: 8px; background: #0a2540; color: #fff; display: grid; place-items: center; font-family: 'Barlow Condensed'; font-weight: 700; font-size: 20px; }
+  .screen-head h3 { font-family: 'Barlow Condensed'; font-size: 22px; color: #0a2540; }
+  .screen-head p { font-size: 9px; color: #64748b; margin-top: 2px; }
+
+  .check-wrap { margin: 16px auto 0; width: 74px; height: 74px; border-radius: 50%; background: #e6f7ee; display: grid; place-items: center; position: relative; }
+  .check-wrap:after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px dashed #b9e7cf; animation: spin 14s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .check { width: 44px; height: 44px; border-radius: 50%; background: #2e9e6b; color: #fff; display: grid; place-items: center; font-size: 24px; font-weight: 700; }
+  .result { text-align: center; margin-top: 10px; }
+  .result b { font-family: 'Barlow Condensed'; font-size: 20px; color: #1a7a4f; letter-spacing: .03em; }
+  .result span { display: block; font-size: 8.5px; color: #64748b; margin-top: 2px; }
+
+  .card-mini { margin: 14px 18px 0; background: #fff; border: 1px solid #e6edf3; border-radius: 12px; padding: 10px 12px; }
+  .card-mini .row { display: flex; justify-content: space-between; font-size: 9px; padding: 4px 0; border-bottom: 1px solid #f1f5f9; }
+  .card-mini .row:last-child { border-bottom: 0; }
+  .card-mini .row span { color: #64748b; }
+  .card-mini .row b { color: #0a2540; }
+  .hash-box { margin: 10px 18px 0; background: #0a2540; border-radius: 10px; padding: 9px 11px; }
+  .hash-box span { display: block; font-size: 7px; color: #94a3b8; letter-spacing: .14em; font-weight: 700; text-transform: uppercase; }
+  .hash-box code { display: block; font-size: 8.5px; color: #a7f3d0; margin-top: 3px; word-break: break-all; font-family: ui-monospace, monospace; line-height: 1.35; }
+  .phone-foot { margin: auto 18px 16px; text-align: center; font-size: 8px; color: #94a3b8; }
+  .phone-foot b { color: #0a2540; }
+
+  .caption { margin-top: 18px; text-align: center; font-size: 11px; color: #475569; max-width: 320px; line-height: 1.5; }
+  .caption b { color: #0a2540; }
+</style>
+</head>
+<body>
+  <div class="title-wrap">
+    <div class="eyebrow">BALSASUD · Acta de liberación</div>
+    <h1>Verificación por código QR</h1>
+  </div>
+
+  <!-- ACTA -->
+  <div class="acta">
+    <div class="acta-head">
+      <div class="brand">
+        <div class="b">B</div>
+        <div><b>BALSASUD S.A.</b><small>CONTROL DE DESPACHOS</small></div>
+      </div>
+      <div class="doc-type"><b>ACTA DE LIBERACIÓN</b>OD-2026-0001 · CoreLite<br>Emitido: 25/11/2026, 08:37 a. m.</div>
+    </div>
+
+    <h2>ACTA DE LIBERACIÓN DE DESPACHO</h2>
+    <div class="sub">OD-2026-0001 · DESPACHO CONCILIADO Y LIBERADO</div>
+
+    <div class="meta">
+      <div><span>Orden de producción</span><b>26SZ140</b></div>
+      <div><span>Orden de compra</span><b>626155</b></div>
+      <div><span>Cliente</span><b>CoreLite</b></div>
+      <div><span>Destino</span><b>Suzlon</b></div>
+      <div><span>Fecha de despacho</span><b>29 de agosto de 2026</b></div>
+      <div><span>Lote</span><b>26207</b></div>
+    </div>
+
+    <table>
+      <thead><tr><th>Espesor</th><th>ITEM ID</th><th class="num">TALLY</th><th class="num">PT</th><th class="num">Calidad</th><th class="num">Δ</th></tr></thead>
+      <tbody>
+        <tr><td>6.3 mm</td><td>6230010251</td><td class="num">534</td><td class="num">534</td><td class="num">534</td><td class="num">0</td></tr>
+        <tr><td>12.7 mm</td><td>6230010501</td><td class="num">1.689</td><td class="num">1.689</td><td class="num">1.689</td><td class="num">0</td></tr>
+        <tr><td>19.1 mm</td><td>6230010751</td><td class="num">574</td><td class="num">574</td><td class="num">574</td><td class="num">0</td></tr>
+        <tr><td>25.4 mm</td><td>6230011001</td><td class="num">1.040</td><td class="num">1.040</td><td class="num">1.040</td><td class="num">0</td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="2">TOTAL GENERAL</td><td class="num">4.425</td><td class="num">4.425</td><td class="num">4.425</td><td class="num">0</td></tr></tfoot>
+    </table>
+
+    <div class="verdict">✓ CONCILIADO: TALLY SHEET = PRODUCTO TERMINADO = CALIDAD.</div>
+
+    <div class="qr-block">
+      <div class="qr-frame" id="qrcode"></div>
+      <small>VERIFICACIÓN QR</small>
+    </div>
+
+    <div class="signatures">
+      <div class="signature"><div class="sig-line"></div><b>Jonathan Vera</b><span>Superadministrador</span><small>25/11/2026, 08:32</small></div>
+      <div class="signature"><div class="sig-line"></div><b>María F. Loor</b><span>Producto Terminado</span><small>25/11/2026, 08:35</small></div>
+      <div class="signature"><div class="sig-line"></div><b>Carlos Mendoza</b><span>Calidad</span><small>25/11/2026, 08:34</small></div>
+    </div>
+
+    <div class="doc-foot"><span>BALSASUD S.A. · Documento generado por el Sistema de Control de Despachos</span><span>Documento liberado</span></div>
+  </div>
+
+  <!-- PHONE -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span>▮▮▮ ⌁</span></div>
+        <div class="screen-head">
+          <div class="mini-logo">B</div>
+          <h3>Verificación de acta</h3>
+          <p>palletsordenjvg.netlify.app</p>
+        </div>
+        <div class="check-wrap"><div class="check">✓</div></div>
+        <div class="result"><b>DOCUMENTO ÍNTEGRO</b><span>El hash coincide con el registrado</span></div>
+        <div class="card-mini">
+          <div class="row"><span>Acta</span><b>OD-2026-0001</b></div>
+          <div class="row"><span>Lote</span><b>26207</b></div>
+          <div class="row"><span>Paneles</span><b>4.425</b></div>
+          <div class="row"><span>Estado</span><b style="color:#2e9e6b">Liberado</b></div>
+        </div>
+        <div class="hash-box">
+          <span>Hash SHA-256 registrado</span>
+          <code>9f2c7a1e4b8d03c6a5e9f172<br>8b4d6c0a3e7f91d2c5b8a4e6</code>
+        </div>
+        <div class="phone-foot">Verificado por <b>BALSASUD</b><br>25/11/2026, 09:12 a. m.</div>
+      </div>
+    </div>
+    <p class="caption">El QR abre una página pública que compara el <b>hash SHA-256</b> del acta con el registrado. Si el documento fue alterado, la verificación falla.</p>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+  new QRCode(document.getElementById('qrcode'), {
+    text: 'https://palletsordenjvg.netlify.app/verificar.html?id=OD-2026-0001&hash=9f2c7a1e4b8d03c6a5e9f1728b4d6c0a3e7f91d2c5b8a4e6',
+    width: 96, height: 96, colorDark: '#0a2540', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+</script>
+</body>
+</html>
